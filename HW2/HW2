@@ -1,0 +1,927 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 143,
+   "id": "90924250",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#name:Bochen Wang\n",
+    "#perm:8344863\n",
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "abalone = pd.read_csv('data/abalone.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 144,
+   "id": "0d90be0c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "abalone['age'] = abalone.rings + 1.5"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 145,
+   "id": "fdf4a13e",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>type</th>\n",
+       "      <th>longest_shell</th>\n",
+       "      <th>diameter</th>\n",
+       "      <th>height</th>\n",
+       "      <th>whole_weight</th>\n",
+       "      <th>shucked_weight</th>\n",
+       "      <th>viscera_weight</th>\n",
+       "      <th>shell_weight</th>\n",
+       "      <th>rings</th>\n",
+       "      <th>age</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>M</td>\n",
+       "      <td>0.455</td>\n",
+       "      <td>0.365</td>\n",
+       "      <td>0.095</td>\n",
+       "      <td>0.5140</td>\n",
+       "      <td>0.2245</td>\n",
+       "      <td>0.1010</td>\n",
+       "      <td>0.150</td>\n",
+       "      <td>15</td>\n",
+       "      <td>16.5</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>M</td>\n",
+       "      <td>0.350</td>\n",
+       "      <td>0.265</td>\n",
+       "      <td>0.090</td>\n",
+       "      <td>0.2255</td>\n",
+       "      <td>0.0995</td>\n",
+       "      <td>0.0485</td>\n",
+       "      <td>0.070</td>\n",
+       "      <td>7</td>\n",
+       "      <td>8.5</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>F</td>\n",
+       "      <td>0.530</td>\n",
+       "      <td>0.420</td>\n",
+       "      <td>0.135</td>\n",
+       "      <td>0.6770</td>\n",
+       "      <td>0.2565</td>\n",
+       "      <td>0.1415</td>\n",
+       "      <td>0.210</td>\n",
+       "      <td>9</td>\n",
+       "      <td>10.5</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>M</td>\n",
+       "      <td>0.440</td>\n",
+       "      <td>0.365</td>\n",
+       "      <td>0.125</td>\n",
+       "      <td>0.5160</td>\n",
+       "      <td>0.2155</td>\n",
+       "      <td>0.1140</td>\n",
+       "      <td>0.155</td>\n",
+       "      <td>10</td>\n",
+       "      <td>11.5</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>I</td>\n",
+       "      <td>0.330</td>\n",
+       "      <td>0.255</td>\n",
+       "      <td>0.080</td>\n",
+       "      <td>0.2050</td>\n",
+       "      <td>0.0895</td>\n",
+       "      <td>0.0395</td>\n",
+       "      <td>0.055</td>\n",
+       "      <td>7</td>\n",
+       "      <td>8.5</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  type  longest_shell  diameter  height  whole_weight  shucked_weight  \\\n",
+       "0    M          0.455     0.365   0.095        0.5140          0.2245   \n",
+       "1    M          0.350     0.265   0.090        0.2255          0.0995   \n",
+       "2    F          0.530     0.420   0.135        0.6770          0.2565   \n",
+       "3    M          0.440     0.365   0.125        0.5160          0.2155   \n",
+       "4    I          0.330     0.255   0.080        0.2050          0.0895   \n",
+       "\n",
+       "   viscera_weight  shell_weight  rings   age  \n",
+       "0          0.1010         0.150     15  16.5  \n",
+       "1          0.0485         0.070      7   8.5  \n",
+       "2          0.1415         0.210      9  10.5  \n",
+       "3          0.1140         0.155     10  11.5  \n",
+       "4          0.0395         0.055      7   8.5  "
+      ]
+     },
+     "execution_count": 145,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "abalone.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 146,
+   "id": "70e2b9b2",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "type              0\n",
+       "longest_shell     0\n",
+       "diameter          0\n",
+       "height            0\n",
+       "whole_weight      0\n",
+       "shucked_weight    0\n",
+       "viscera_weight    0\n",
+       "shell_weight      0\n",
+       "rings             0\n",
+       "age               0\n",
+       "dtype: int64"
+      ]
+     },
+     "execution_count": 146,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "abalone.isna().sum()#check if there is any missing value"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 147,
+   "id": "e15f51c2",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.series.Series'>\n",
+      "RangeIndex: 4177 entries, 0 to 4176\n",
+      "Series name: age\n",
+      "Non-Null Count  Dtype  \n",
+      "--------------  -----  \n",
+      "4177 non-null   float64\n",
+      "dtypes: float64(1)\n",
+      "memory usage: 32.8 KB\n"
+     ]
+    }
+   ],
+   "source": [
+    "abalone.age.info()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 148,
+   "id": "d215c7c2",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<AxesSubplot: >"
+      ]
+     },
+     "execution_count": 148,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 1 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "abalone.age.hist()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 149,
+   "id": "9bf61370",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#1\n",
+    "# we can see from the above the mean is 11.43 and have standard distribution of 3.22. \n",
+    "# we also have 4177 samples that we can learn\n",
+    "# the data is skewed to the right so that the population need further investigation\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 150,
+   "id": "903a23c0",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#2\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "aba_noring = abalone.drop(columns = ['rings'])#remove the rings column for further uses\n",
+    "aba_train_x, aba_test_x,aba_train_y, aba_test_y = train_test_split(aba_noring.drop(columns=['age']),\n",
+    "                                                                   aba_noring.age,\n",
+    "                                                                   test_size = 0.2,\n",
+    "                                                                   random_state = 250,\n",
+    "                                                                   stratify=aba_noring.type)\n",
+    "#this function already have the inbuild function of setting the seed at random_state\n",
+    "#using type to stratify and split the data in to 8:2 proportion\n",
+    "#we can see from the information below that test and training set have been splited."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 151,
+   "id": "a6fdede5",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>longest_shell</th>\n",
+       "      <th>diameter</th>\n",
+       "      <th>height</th>\n",
+       "      <th>whole_weight</th>\n",
+       "      <th>shucked_weight</th>\n",
+       "      <th>viscera_weight</th>\n",
+       "      <th>shell_weight</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>count</th>\n",
+       "      <td>3341.000000</td>\n",
+       "      <td>3341.000000</td>\n",
+       "      <td>3341.000000</td>\n",
+       "      <td>3341.000000</td>\n",
+       "      <td>3341.000000</td>\n",
+       "      <td>3341.000000</td>\n",
+       "      <td>3341.000000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>mean</th>\n",
+       "      <td>0.523837</td>\n",
+       "      <td>0.407811</td>\n",
+       "      <td>0.139645</td>\n",
+       "      <td>0.829904</td>\n",
+       "      <td>0.360208</td>\n",
+       "      <td>0.181132</td>\n",
+       "      <td>0.238893</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>std</th>\n",
+       "      <td>0.121009</td>\n",
+       "      <td>0.099951</td>\n",
+       "      <td>0.042768</td>\n",
+       "      <td>0.492156</td>\n",
+       "      <td>0.222861</td>\n",
+       "      <td>0.110358</td>\n",
+       "      <td>0.139752</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>min</th>\n",
+       "      <td>0.075000</td>\n",
+       "      <td>0.055000</td>\n",
+       "      <td>0.000000</td>\n",
+       "      <td>0.002000</td>\n",
+       "      <td>0.001000</td>\n",
+       "      <td>0.000500</td>\n",
+       "      <td>0.001500</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>25%</th>\n",
+       "      <td>0.450000</td>\n",
+       "      <td>0.345000</td>\n",
+       "      <td>0.115000</td>\n",
+       "      <td>0.441000</td>\n",
+       "      <td>0.186000</td>\n",
+       "      <td>0.092500</td>\n",
+       "      <td>0.130000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>50%</th>\n",
+       "      <td>0.545000</td>\n",
+       "      <td>0.425000</td>\n",
+       "      <td>0.140000</td>\n",
+       "      <td>0.803500</td>\n",
+       "      <td>0.338500</td>\n",
+       "      <td>0.171000</td>\n",
+       "      <td>0.235000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>75%</th>\n",
+       "      <td>0.615000</td>\n",
+       "      <td>0.480000</td>\n",
+       "      <td>0.165000</td>\n",
+       "      <td>1.160000</td>\n",
+       "      <td>0.506500</td>\n",
+       "      <td>0.254000</td>\n",
+       "      <td>0.330000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>max</th>\n",
+       "      <td>0.815000</td>\n",
+       "      <td>0.650000</td>\n",
+       "      <td>1.130000</td>\n",
+       "      <td>2.825500</td>\n",
+       "      <td>1.351000</td>\n",
+       "      <td>0.760000</td>\n",
+       "      <td>1.005000</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "       longest_shell     diameter       height  whole_weight  shucked_weight  \\\n",
+       "count    3341.000000  3341.000000  3341.000000   3341.000000     3341.000000   \n",
+       "mean        0.523837     0.407811     0.139645      0.829904        0.360208   \n",
+       "std         0.121009     0.099951     0.042768      0.492156        0.222861   \n",
+       "min         0.075000     0.055000     0.000000      0.002000        0.001000   \n",
+       "25%         0.450000     0.345000     0.115000      0.441000        0.186000   \n",
+       "50%         0.545000     0.425000     0.140000      0.803500        0.338500   \n",
+       "75%         0.615000     0.480000     0.165000      1.160000        0.506500   \n",
+       "max         0.815000     0.650000     1.130000      2.825500        1.351000   \n",
+       "\n",
+       "       viscera_weight  shell_weight  \n",
+       "count     3341.000000   3341.000000  \n",
+       "mean         0.181132      0.238893  \n",
+       "std          0.110358      0.139752  \n",
+       "min          0.000500      0.001500  \n",
+       "25%          0.092500      0.130000  \n",
+       "50%          0.171000      0.235000  \n",
+       "75%          0.254000      0.330000  \n",
+       "max          0.760000      1.005000  "
+      ]
+     },
+     "execution_count": 151,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "aba_train_x.describe()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 152,
+   "id": "2d55425e",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "count    3341.000000\n",
+       "mean       11.401227\n",
+       "std         3.204852\n",
+       "min         2.500000\n",
+       "25%         9.500000\n",
+       "50%        10.500000\n",
+       "75%        12.500000\n",
+       "max        28.500000\n",
+       "Name: age, dtype: float64"
+      ]
+     },
+     "execution_count": 152,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "aba_train_y.describe()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 65,
+   "id": "7abefc3c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#3 ,4 and 5\n",
+    "#I have excluded the rings variable. \n",
+    "#Because that age is dependent on the rings that poses a question of colinearity. age=rings+1.5\n",
+    "\n",
+    "#python have a differ workflow than R so I used different approches here\n",
+    "#Scikit-learn’s “pipelines” serve the combined purpose of “workflows” and “recipes” in {tidymodels}. \n",
+    "#They allow you to define a set of preprocessing and modeling steps that you can then apply to any dataset. \n",
+    "#They are defined by the function make_pipeline(), with the steps, in order, as arguments."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 167,
+   "id": "fed16090",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.base import TransformerMixin#used for feature engineering\n",
+    "from sklearn.pipeline import Pipeline#include the pipeline\n",
+    "from sklearn.preprocessing import StandardScaler#used for standardizing\n",
+    "from sklearn.linear_model import LinearRegression#the model selection\n",
+    "\n",
+    "class CustomTransformer(TransformerMixin):#this class I copied from the sklearn website to do feature engineering\n",
+    "    def fit(self, X, y=None):\n",
+    "        \"\"\"The fit method doesn't do much here, \n",
+    "           but it still required if your pipeline\n",
+    "           ever need to be fit. Just returns self.\"\"\"\n",
+    "        return self\n",
+    "\n",
+    "    def transform(self, X, y=None):\n",
+    "        \"\"\"This is where the actual transformation occurs.\n",
+    "           Assuming you want to compute the product of your feature\n",
+    "           height and area.\n",
+    "        \"\"\"\n",
+    "        # Copy X to avoid mutating the original dataset\n",
+    "        X_ = X.copy()\n",
+    "        # change new_feature and right member according to your needs\n",
+    "        #X_[\"new_feature\"] = X_[\"height\"] * X_[\"area\"]\n",
+    "        \n",
+    "        #X_ = pd.get_dummies(X_, columns=['type']) I decided to exclude this because this code only generate with exsiting categories\n",
+    "        #so it is not useful for single prediction\n",
+    "        #so I include this as a general rule for dummy encoding\n",
+    "        values=[1,0]\n",
+    "        conditionsF=[(X_['type']=='F'),(X_['type']!='F')]\n",
+    "        X_['type_F']=np.select(conditionsF,values)\n",
+    "        conditionsI=[(X_['type']=='I'),(X_['type']!='I')]\n",
+    "        X_['type_I']=np.select(conditionsI,values)\n",
+    "        conditionsM=[(X_['type']=='M'),(X_['type']!='M')]\n",
+    "        X_['type_M']=np.select(conditionsM,values)\n",
+    "        X_ = X_.drop(columns=['type'])\n",
+    "        \n",
+    "        #these are the interaction varibles\n",
+    "        X_['type_F' +'*'+'shucked_weight'] = X_['type_F'] * X_['shucked_weight']\n",
+    "        X_['type_I' +'*'+'shucked_weight'] = X_['type_I'] * X_['shucked_weight']\n",
+    "        X_['type_M' +'*'+'shucked_weight'] = X_['type_M'] * X_['shucked_weight']\n",
+    "        X_['longest_shell' +'*'+'diameter'] = X_['longest_shell'] * X_['diameter']\n",
+    "        X_['shell_weight' +'*'+'shucked_weight'] = X_['shell_weight'] * X_['shucked_weight']\n",
+    "        # you then return the newly transformed dataset. It will be \n",
+    "        # passed to the next step of your pipeline\n",
+    "        return X_\n",
+    "custom = CustomTransformer()\n",
+    "\n",
+    "lr_pipe = Pipeline([('feature_engineering', custom),\n",
+    "                    ('scl', StandardScaler()),\n",
+    "                    ('clf',LinearRegression())])#using pipeline to standardize the varibles\n",
+    "\n",
+    "lm = lr_pipe.fit(aba_train_x, aba_train_y)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 169,
+   "id": "8561bda9",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<style>#sk-container-id-2 {color: black;background-color: white;}#sk-container-id-2 pre{padding: 0;}#sk-container-id-2 div.sk-toggleable {background-color: white;}#sk-container-id-2 label.sk-toggleable__label {cursor: pointer;display: block;width: 100%;margin-bottom: 0;padding: 0.3em;box-sizing: border-box;text-align: center;}#sk-container-id-2 label.sk-toggleable__label-arrow:before {content: \"▸\";float: left;margin-right: 0.25em;color: #696969;}#sk-container-id-2 label.sk-toggleable__label-arrow:hover:before {color: black;}#sk-container-id-2 div.sk-estimator:hover label.sk-toggleable__label-arrow:before {color: black;}#sk-container-id-2 div.sk-toggleable__content {max-height: 0;max-width: 0;overflow: hidden;text-align: left;background-color: #f0f8ff;}#sk-container-id-2 div.sk-toggleable__content pre {margin: 0.2em;color: black;border-radius: 0.25em;background-color: #f0f8ff;}#sk-container-id-2 input.sk-toggleable__control:checked~div.sk-toggleable__content {max-height: 200px;max-width: 100%;overflow: auto;}#sk-container-id-2 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {content: \"▾\";}#sk-container-id-2 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-2 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-2 input.sk-hidden--visually {border: 0;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);height: 1px;margin: -1px;overflow: hidden;padding: 0;position: absolute;width: 1px;}#sk-container-id-2 div.sk-estimator {font-family: monospace;background-color: #f0f8ff;border: 1px dotted black;border-radius: 0.25em;box-sizing: border-box;margin-bottom: 0.5em;}#sk-container-id-2 div.sk-estimator:hover {background-color: #d4ebff;}#sk-container-id-2 div.sk-parallel-item::after {content: \"\";width: 100%;border-bottom: 1px solid gray;flex-grow: 1;}#sk-container-id-2 div.sk-label:hover label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-2 div.sk-serial::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: 0;}#sk-container-id-2 div.sk-serial {display: flex;flex-direction: column;align-items: center;background-color: white;padding-right: 0.2em;padding-left: 0.2em;position: relative;}#sk-container-id-2 div.sk-item {position: relative;z-index: 1;}#sk-container-id-2 div.sk-parallel {display: flex;align-items: stretch;justify-content: center;background-color: white;position: relative;}#sk-container-id-2 div.sk-item::before, #sk-container-id-2 div.sk-parallel-item::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: -1;}#sk-container-id-2 div.sk-parallel-item {display: flex;flex-direction: column;z-index: 1;position: relative;background-color: white;}#sk-container-id-2 div.sk-parallel-item:first-child::after {align-self: flex-end;width: 50%;}#sk-container-id-2 div.sk-parallel-item:last-child::after {align-self: flex-start;width: 50%;}#sk-container-id-2 div.sk-parallel-item:only-child::after {width: 0;}#sk-container-id-2 div.sk-dashed-wrapped {border: 1px dashed gray;margin: 0 0.4em 0.5em 0.4em;box-sizing: border-box;padding-bottom: 0.4em;background-color: white;}#sk-container-id-2 div.sk-label label {font-family: monospace;font-weight: bold;display: inline-block;line-height: 1.2em;}#sk-container-id-2 div.sk-label-container {text-align: center;}#sk-container-id-2 div.sk-container {/* jupyter's `normalize.less` sets `[hidden] { display: none; }` but bootstrap.min.css set `[hidden] { display: none !important; }` so we also need the `!important` here to be able to override the default hidden behavior on the sphinx rendered scikit-learn.org. See: https://github.com/scikit-learn/scikit-learn/issues/21755 */display: inline-block !important;position: relative;}#sk-container-id-2 div.sk-text-repr-fallback {display: none;}</style><div id=\"sk-container-id-2\" class=\"sk-top-container\"><div class=\"sk-text-repr-fallback\"><pre>Pipeline(steps=[(&#x27;feature_engineering&#x27;,\n",
+       "                 &lt;__main__.CustomTransformer object at 0x0000014FC9EC4CD0&gt;),\n",
+       "                (&#x27;scl&#x27;, StandardScaler()), (&#x27;clf&#x27;, LinearRegression())])</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br />On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class=\"sk-container\" hidden><div class=\"sk-item sk-dashed-wrapped\"><div class=\"sk-label-container\"><div class=\"sk-label sk-toggleable\"><input class=\"sk-toggleable__control sk-hidden--visually\" id=\"sk-estimator-id-5\" type=\"checkbox\" ><label for=\"sk-estimator-id-5\" class=\"sk-toggleable__label sk-toggleable__label-arrow\">Pipeline</label><div class=\"sk-toggleable__content\"><pre>Pipeline(steps=[(&#x27;feature_engineering&#x27;,\n",
+       "                 &lt;__main__.CustomTransformer object at 0x0000014FC9EC4CD0&gt;),\n",
+       "                (&#x27;scl&#x27;, StandardScaler()), (&#x27;clf&#x27;, LinearRegression())])</pre></div></div></div><div class=\"sk-serial\"><div class=\"sk-item\"><div class=\"sk-estimator sk-toggleable\"><input class=\"sk-toggleable__control sk-hidden--visually\" id=\"sk-estimator-id-6\" type=\"checkbox\" ><label for=\"sk-estimator-id-6\" class=\"sk-toggleable__label sk-toggleable__label-arrow\">CustomTransformer</label><div class=\"sk-toggleable__content\"><pre>&lt;__main__.CustomTransformer object at 0x0000014FC9EC4CD0&gt;</pre></div></div></div><div class=\"sk-item\"><div class=\"sk-estimator sk-toggleable\"><input class=\"sk-toggleable__control sk-hidden--visually\" id=\"sk-estimator-id-7\" type=\"checkbox\" ><label for=\"sk-estimator-id-7\" class=\"sk-toggleable__label sk-toggleable__label-arrow\">StandardScaler</label><div class=\"sk-toggleable__content\"><pre>StandardScaler()</pre></div></div></div><div class=\"sk-item\"><div class=\"sk-estimator sk-toggleable\"><input class=\"sk-toggleable__control sk-hidden--visually\" id=\"sk-estimator-id-8\" type=\"checkbox\" ><label for=\"sk-estimator-id-8\" class=\"sk-toggleable__label sk-toggleable__label-arrow\">LinearRegression</label><div class=\"sk-toggleable__content\"><pre>LinearRegression()</pre></div></div></div></div></div></div></div>"
+      ],
+      "text/plain": [
+       "Pipeline(steps=[('feature_engineering',\n",
+       "                 <__main__.CustomTransformer object at 0x0000014FC9EC4CD0>),\n",
+       "                ('scl', StandardScaler()), ('clf', LinearRegression())])"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "#in order to make this clearer I included the diagram for this pipeline as in the function of sklearn\n",
+    "from sklearn import set_config\n",
+    "\n",
+    "set_config(display='diagram')\n",
+    "display(lm)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 170,
+   "id": "f14648c6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#6 using the model for specific predictions\n",
+    "#create a DataFrame\n",
+    "d_new = {'type':['F'], 'longest_shell':[0.50],\n",
+    "         'diameter':[0.10],'height':[0.30],\n",
+    "         'whole_weight':[4],'shucked_weight':[1],\n",
+    "         'viscera_weight':[2],'shell_weight':[1]}\n",
+    "hypo_F = pd.DataFrame(data = d_new)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 171,
+   "id": "bf3cea33",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>type</th>\n",
+       "      <th>longest_shell</th>\n",
+       "      <th>diameter</th>\n",
+       "      <th>height</th>\n",
+       "      <th>whole_weight</th>\n",
+       "      <th>shucked_weight</th>\n",
+       "      <th>viscera_weight</th>\n",
+       "      <th>shell_weight</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>F</td>\n",
+       "      <td>0.5</td>\n",
+       "      <td>0.1</td>\n",
+       "      <td>0.3</td>\n",
+       "      <td>4</td>\n",
+       "      <td>1</td>\n",
+       "      <td>2</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  type  longest_shell  diameter  height  whole_weight  shucked_weight  \\\n",
+       "0    F            0.5       0.1     0.3             4               1   \n",
+       "\n",
+       "   viscera_weight  shell_weight  \n",
+       "0               2             1  "
+      ]
+     },
+     "execution_count": 171,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "hypo_F"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 172,
+   "id": "dfb1ebf5",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([25.0320658])"
+      ]
+     },
+     "execution_count": 172,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "lm.predict(hypo_F)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 175,
+   "id": "d086dd34",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>true</th>\n",
+       "      <th>pred</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>1669</th>\n",
+       "      <td>11.5</td>\n",
+       "      <td>11.703001</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4135</th>\n",
+       "      <td>12.5</td>\n",
+       "      <td>13.764627</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3718</th>\n",
+       "      <td>8.5</td>\n",
+       "      <td>9.320869</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1340</th>\n",
+       "      <td>10.5</td>\n",
+       "      <td>10.869176</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1952</th>\n",
+       "      <td>11.5</td>\n",
+       "      <td>11.832726</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>...</th>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>628</th>\n",
+       "      <td>22.5</td>\n",
+       "      <td>12.836685</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1458</th>\n",
+       "      <td>8.5</td>\n",
+       "      <td>9.678178</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1973</th>\n",
+       "      <td>11.5</td>\n",
+       "      <td>12.429232</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1195</th>\n",
+       "      <td>10.5</td>\n",
+       "      <td>9.551909</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4153</th>\n",
+       "      <td>9.5</td>\n",
+       "      <td>9.148356</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>836 rows × 2 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      true       pred\n",
+       "1669  11.5  11.703001\n",
+       "4135  12.5  13.764627\n",
+       "3718   8.5   9.320869\n",
+       "1340  10.5  10.869176\n",
+       "1952  11.5  11.832726\n",
+       "...    ...        ...\n",
+       "628   22.5  12.836685\n",
+       "1458   8.5   9.678178\n",
+       "1973  11.5  12.429232\n",
+       "1195  10.5   9.551909\n",
+       "4153   9.5   9.148356\n",
+       "\n",
+       "[836 rows x 2 columns]"
+      ]
+     },
+     "execution_count": 175,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#7\n",
+    "lm_pred_tbl = pd.DataFrame(#create the data frame by the test results\n",
+    "{\"true\": aba_test_y,\n",
+    "\"pred\": lm.predict(aba_test_x)})\n",
+    "lm_pred_tbl"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 176,
+   "id": "a4622e43",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>metric</th>\n",
+       "      <th>estimate</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>R^2</td>\n",
+       "      <td>0.563932</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>RMSE</td>\n",
+       "      <td>2.177206</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>MAE</td>\n",
+       "      <td>1.533275</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  metric  estimate\n",
+       "0    R^2  0.563932\n",
+       "1   RMSE  2.177206\n",
+       "2    MAE  1.533275"
+      ]
+     },
+     "execution_count": 176,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from sklearn.metrics import r2_score#check R^2 score \n",
+    "cr_r2 =r2_score(\n",
+    "y_true = lm_pred_tbl.true, \n",
+    "y_pred = lm_pred_tbl.pred)\n",
+    "\n",
+    "from sklearn.metrics import mean_squared_error#check rmse\n",
+    "cr_rmse = mean_squared_error(\n",
+    "y_true = lm_pred_tbl.true, \n",
+    "y_pred = lm_pred_tbl.pred, squared=False)\n",
+    "\n",
+    "from sklearn.metrics import mean_absolute_error#check mae\n",
+    "cr_mae =mean_absolute_error(\n",
+    "y_true = lm_pred_tbl.true, \n",
+    "y_pred = lm_pred_tbl.pred)\n",
+    "\n",
+    "#since R package yardstick and python have its difference so I will provide a dataframe containing the scores.\n",
+    "d = {'metric':['R^2','RMSE','MAE'],'estimate':[cr_r2,cr_rmse,cr_mae]}\n",
+    "df = pd.DataFrame(data=d)\n",
+    "df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 177,
+   "id": "4adc07f0",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#for R^2 is 0.564 means that approximately half of the observed variation can be explained by the model's inputs."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "d3fc235e",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
