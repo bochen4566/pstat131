@@ -1,0 +1,46 @@
+---
+title: "231FP"
+author: "Bochen Wang"
+date: "2022-11-17"
+output: html_document
+---
+```{r}
+library(corrplot)  # for the correlation plot
+library(discrim)  # for linear discriminant analysis
+library(corrr)   # for calculating correlation
+library(knitr)   # to help with the knitting process
+library(MASS)    # to assist with the markdown processes
+library(tidyverse)   # using tidyverse and tidymodels for this project mostly
+library(tidymodels)
+library(ggplot2)   # for most of our visualizations
+library(ggrepel)
+library(rpart.plot)  # for visualizing trees
+library(vip)         # for variable importance 
+library(janitor)     # for cleaning out our data
+library(randomForest)   # for building our randomForest
+library(stringr)    # for matching strings
+library("dplyr")     # for basic r functions
+library("yardstick") # for measuring certain metrics
+tidymodels_prefer()
+
+```
+
+the goal of this project is to predict the price range of a certain phone type. 
+
+The data choosen is from 3 years ago that might be a bit old. We have certain code book for the variables explaining the names. 
+
+
+```{r setup, include=FALSE}
+phone <- read.csv("D:/1/code/pstat131/train.csv")
+```
+
+```{r}
+dim(phone)
+```
+```{r}
+head(phone)
+```
+
+
+
+
