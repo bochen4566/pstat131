@@ -1,0 +1,48 @@
+This is the code book for the phone data. This folder contains two csv files. 
+
+phone.csv -- the data for training and testing
+
+new.csv -- the data I collected for prediction and classification
+
+Variable Names:
+battery_power: Total energy a battery can store in one time measured in mAh.
+
+blue: Has bluetooth or not.(0 is no, 1 is yes)
+
+clock_speed: speed at which microprocessor executes instructions.
+
+dual_sim: Has dual sim support or not.(0 is no, 1 is yes)
+
+fc: Front Camera mega pixels.
+
+four_g: Has 4G or not.(0 is no, 1 is yes)
+
+int_memory: Internal Memory in Gigabytes.
+
+m_dep: Mobile Depth in cm.
+
+mobile_wt: mobile_wt.
+
+n_cores: Number of cores of processor.
+
+pc: Primary Camera mega pixels.
+
+px_height: Pixel Resolution Height.
+
+px_width: Pixel Resolution Width.
+
+ram: Random Access Memory in Megabytes.
+
+sc_h: Screen Height of mobile in cm.
+
+sc_w: Screen Width of mobile in cm.
+
+talk_time: longest time that a single battery charge will last when you are talking.
+
+three_g: Has 3G or not.(0 is no, 1 is yes)
+
+touch_screen: Has touch screen or not.(0 is no, 1 is yes)
+
+wifi: has wifi or not.(0 is no, 1 is yes)
+
+price_range: This is the target variable with value of 0(low cost), 1(medium cost), 2(high cost) and 3(very high cost).

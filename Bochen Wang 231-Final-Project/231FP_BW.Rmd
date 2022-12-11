@@ -1,0 +1,718 @@
+---
+title: "Classifcation for Mobile Price Range with Machine Learning (231 Final Project)"
+author: "Bochen Wang"
+date: "2022-11-17"
+output: 
+  html_document:
+      toc: true
+      toc_float: true
+      code_folding: hide
+---
+
+# Introduction:
+
+## Goal:
+The goal of this project is to predict the price range of a certain phone type by classification. There are four price range that matches this part that is from Low price to medium price to high price and vary high. Phone prices are one reason what we consider whether to purchase this phone or not. My dataset is from the Kaggle data set which is about the phone price range. This dataset is from 3 years ago that still using 4g and 3g connection. 
+
+## Meaning and Roadmap of the Project:
+The phone prices are what company and customers are caring about. Use what the method that with inputted trained models that we can have the computer using the machine learning method for predicting and labeling the price range of the phones with their attributes. This project will achieve this goal with the dataset provided as the first training model. I will preform exploratory data analysis to see the data patterns within each variable. Later, I will create models with Logistic regression, Lasso regression, LDA QDA, decision tree and random forest model for our prediction and classification of the price range. We with train this model suing stratification and k-folds to preform cross-validation and tuning the parameters of the models. Then, we will test the selected best preforming models for validation on the splited testing set. 
+
+
+## Loading Packages and Environment:
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warning = FALSE, cache = F)
+```
+
+
+```{r}
+library(corrplot)  # for the correlation plot
+library(corrr)   # for calculating correlation
+library(knitr)   # to help with the knitting process
+library(MASS)    # to assist with the markdown processes
+library(tidyverse)   # using tidyverse and tidymodels for this project mostly
+library(tidymodels)
+library(ggplot2)   # for most of our visualizations
+library(ggrepel)
+library(rpart.plot)  # for visualizing trees
+library(vip)         # for variable importance 
+library(janitor)     # for cleaning out our data
+library(randomForest)   # for building our randomForest
+library(stringr)    # for matching strings
+library("dplyr")     # for basic r functions
+library("yardstick") # for measuring certain metrics
+library(ggpubr)
+tidymodels_prefer()
+options(scipen = 9999)
+```
+
+
+
+
+Lets first begin loading our data from the csv file:
+```{r,class.source = "fold-show"}
+phone <- read.csv("D:/1/code/pstat131/train.csv")
+```
+
+Lets see how many observation we will be working on.
+```{r,class.source = "fold-show"}
+dim(phone)
+```
+It is about 40000 data we have and 20 varible as predictors.
+
+Lets also get a peek of the data:
+```{r}
+head(phone)
+```
+I will put what each variable means here that illustrate the function of each variable.
+variable names Code Book:
+battery_power: Total energy a battery can store in one time measured in mAh.
+blue: Has bluetooth or not.
+clock_speed: speed at which microprocessor executes instructions.
+dual_sim: Has dual sim support or not.
+fc: Front Camera mega pixels.
+four_g: Has 4G or not.
+int_memory: Internal Memory in Gigabytes.
+m_dep: Mobile Depth in cm.
+mobile_wt: mobile_wt.
+n_cores: Number of cores of processor.
+pc: Primary Camera mega pixels.
+px_height: Pixel Resolution Height.
+px_width: Pixel Resolution Width.
+ram: Random Access Memory in Megabytes.
+sc_h: Screen Height of mobile in cm.
+sc_w: Screen Width of mobile in cm.
+talk_time: longest time that a single battery charge will last when you are talking.
+three_g: Has 3G or not.
+touch_screen: Has touch screen or not.
+wifi: has wifi or not.
+price_range: This is the target variable with value of 0(low cost), 1(medium cost), 2(high cost) and 3(very high cost).
+
+
+# Exploratory Data Analysis
+
+The data choosen is from 3 years ago that might be a bit old. We have certain code book for the variables explaining the names. However, this dataset has many observation and catigorical value already dummy encoded so I ease the process but I decide to make it to factor and dummy encode it in our recipe.
+
+changing the categorical data to factors:
+```{r, class.source = "fold-show"}
+phone$blue <- as.factor(phone$blue)
+phone$dual_sim <- as.factor(phone$dual_sim)
+phone$four_g <- as.factor(phone$four_g)
+phone$three_g <- as.factor(phone$three_g)
+phone$touch_screen <- as.factor(phone$touch_screen)
+phone$wifi <- as.factor(phone$wifi)
+phone$price_range <- as.factor(phone$price_range)
+```
+
+Correlation plots:
+```{r, class.source = "fold-show"}
+phone_numer <- phone %>%  # getting just the numeric data
+  select_if(is.numeric)
+
+phone_cor <- cor(phone_numer)  # calculating the correlation between each variable
+phone_cor_plot <- corrplot(phone_cor,  # making the correlation plot
+                               order = 'AOE')
+```
+
+I am surprised that there are little correlation between the varibles. The screen height and the screen width are connected with one another because their screen size are basically related to this. Also, the front camara pixels and primary camare pixiels are correlated because the varibles are related to each other by the different parameter of pixel size. It is the samefor pixel width and height. So we might want to explore each varible's relation and distribution with the response parameter in our later EDA.
+
+## Response - Phone Price Range:
+```{r}
+phone %>% 
+  ggplot(aes(x = price_range)) +
+  geom_bar()
+```
+
+We can see that the data we have chosen is equally distributed in the four price range that we can use the reasonable stratified sampling for getting the training set later.
+
+## Battery Power:
+```{r}
+ggplot(phone, aes(battery_power)) +  
+  geom_boxplot()
+```
+
+We can see that it is distributed normally around 1200.
+
+```{r}
+ggplot(phone, aes(battery_power)) + 
+  geom_histogram(aes(fill = price_range)) +
+  scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+
+```
+
+We can see distictively here that higher price range phones tend to have higher better power. In the latter part, I will examine the talk_time relation with the battery power to see if they have some thing in common.
+
+## Bluetooth:
+
+```{r}
+ggplot(phone, aes(blue)) +
+  geom_bar(aes(fill = price_range)) +
+  scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+```
+
+It seems like the data set has collected equally amount of blue tooth for each price range. So I think this variable is not so good for recognition of price range becasue it does not have specific distributions.
+
+## Clock speed:
+
+```{r}
+ggplot(phone, aes(clock_speed)) +  
+  geom_boxplot()
+```
+```{r}
+ggplot(phone, aes(clock_speed)) + 
+  geom_bar(aes(fill = price_range)) +
+  scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+
+```
+
+We can see that mostly the clock speed is higher has fewer observations. This distribution is different at each level of clock_speed so it can be a distinctive factor for recognizing the price ranges.
+
+## Int Memory:
+```{r}
+ggplot(phone, aes(int_memory)) + 
+  geom_bar(aes(fill = price_range)) +
+  scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+
+```
+
+we can say that lower price range have lower memory stored. There are distinctive features here about the distribution and we can examine with vip function to see which variables are more important than the other.
+
+## Pixels discovery:
+I want to see how does pixel width and height related to each other
+
+```{r}
+phone %>% 
+  ggplot(aes(x = px_width, y = px_height)) +
+  geom_point()
+```
+
+```{r}
+ggplot(phone, aes(px_width*px_height)) + 
+  geom_histogram(aes(fill = price_range)) +
+  scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+
+```
+
+I created the scatter plot between the two variables and use the multpied version of the two with their results beening that most phone's pixels are reletively low but we can use their correlation for extraction of features.
+
+## Touch Screen and Price:
+```{r}
+ggplot(phone, aes(touch_screen)) +
+  geom_bar(aes(fill = price_range)) +
+  scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+```
+
+I dont see there is much of a difference that make us to differ from the price range.
+
+## Camaras:
+The front camera and primary camera are correlated and I want to see how they are relating to each other.
+
+```{r}
+ggplot(phone, aes(fc)) + 
+  geom_histogram(aes(fill = price_range)) +
+  scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+```
+```{r}
+ggplot(phone, aes(pc)) + 
+  geom_histogram(aes(fill = price_range)) +
+  scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+```
+
+We can see that they depend on the fc variable more than pc variable. Their combined features can be important for differencing the distinction. 
+
+## RAM and Cores:
+```{r}
+phone %>%
+  ggplot() + 
+    geom_boxplot(mapping=aes(x = n_cores, y = ram, fill = price_range)) +
+    scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+```
+
+We can see that with increased prices their ram and number of processors are also increasing. So these two variables are vary important in classifying the price ranges of the mobile.
+
+## Talk time, Bettery and Price:
+
+```{r}
+phone %>%
+  ggplot() + 
+    geom_boxplot(mapping=aes(x = talk_time, y = battery_power, fill = price_range)) +
+    scale_fill_manual(values = c("#000000", "#00FF00",	"#1E90FF","#FB4F14"))
+```
+
+There is not so much going on with talk time and battery power maybe because the talk time for low price phones are shorter even if their battery power is the same.
+
+## EDA conclusion: 
+
+We have examined the varibles by visualizing the different plots of how the price range differs from each different unique features.I am surprised that some of the features does not have the unique values for its specific attributes. Maybe it is because the number of each varible have the same amount of price range for it to be easily recognized. I am excluding the variable because sc_w and sc_h and using their multiplied value so that it is fair to not include linearly dependent variables. Also, there is a problem that some variables are distributed evenly so I will need to figure out how the model preform due to those distributions. The talk_time and battery is contradicting our common knowledge that more talk time with more battery power. 
+
+## Data Morphying:
+I decided to add the combined value after the EDA of the px_width and px_height's multiplication, so I decided to add a column of their multiplied values in the data and use it as a predictor.
+```{r,class.source = "fold-show"}
+phone <- phone %>% 
+  mutate(px_size = px_width * px_height)
+
+```
+
+# Pre-Modelling:
+
+
+## Train and test spliting:
+Here I choose to split the data into 80/20 that we can have a reasonable amount of testing and training sets.
+
+```{r,class.source = "fold-show"}
+set.seed(2500)  # setting a seed for reproducible results
+phone_split <- phone %>%
+  initial_split(prop = 0.8, strata = "price_range")
+
+phone_train <- training(phone_split) # training split
+phone_test <- testing(phone_split) # testing split
+
+```
+
+Let's check the testing and training data:
+
+```{r,class.source = "fold-show"}
+dim(phone_train)
+dim(phone_test)
+```
+We can see that they have been successfully splited into the training sets and testing sets.
+
+We want to use k-folds for the cross validation of our data:
+I am using 5-fold that can run a bit faster on the different models
+```{r,class.source = "fold-show"}
+train_folds <- vfold_cv(phone_train, v = 5, strata = price_range)  # 5-fold CV
+```
+
+## Recipe Building:
+I will use the correlated variable with fc and pc, and I am including the width*height for their correlation.
+```{r,class.source = "fold-show"}
+phone_recipe <-   # building the recipe to be used for each model
+  recipe(price_range ~ battery_power + blue + clock_speed + dual_sim +
+           four_g + fc + pc + int_memory + m_dep + mobile_wt + n_cores +
+           ram + talk_time + three_g + touch_screen + wifi + px_size, 
+         data = phone) %>% 
+  step_impute_linear(clock_speed) %>% 
+  step_impute_linear(m_dep) %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_interact(terms=~fc:pc) %>% 
+  step_center(all_predictors()) %>%   # standardizing predictors
+  step_scale(all_predictors())
+```
+
+I choose to use the interactions with the sc_w:sc_h, px_width:px_height and fc:pc because their multiplied value
+
+# Model Building
+For my models, I am going to use lasso regression, boosted tree, random forest and KNN models for my classification problem. I use the r scripts to build the model and use the r work space to load the data that I will not to run the modelling process whenever I knit it. I will specify the step I am building and plot the results of our model's performance. The metric I used to assess my model is by ROC_AUC of the tuned performance. This essentially calculates the area under the curve for the receiver operating characteristic (ROC) curve, which highlights the trade-off between sensibility and sensitivity. 
+
+### Steps for Model Building
+
+1. Setting up the models and engines spec
+2. Set up a workflow and add the recipe and the model
+3. Setting the tuning grid with the parameters that we want tuned, and levels of tuning
+4. Tune the model with the parameters of choice
+5. Select the most accurate model from all of the tuning, finalize the workflow with those tuning parameters
+6. Fit that model with workflow to the training data set
+7. Save our results to an RDA file and load it here so that I do not need to wait for it to knit again.
+
+### Code Specs
+Here I included the code I use for building the model specs, which is also included in the submitted folder.
+
+```{r, eval=F}
+#lasso spec
+phone_lasso_spec <- 
+  multinom_reg(penalty = tune(), mixture = tune()) %>% 
+  set_engine("glmnet")
+
+lasso_workflow <- workflow() %>% 
+  add_recipe(phone_recipe) %>% 
+  add_model(phone_lasso_spec)
+
+penalty_grid <- grid_regular(penalty(range = c(-5, 5)), mixture(range=c(0,1)),
+                             levels = 5)
+penalty_grid
+
+tune_res_lasso <- tune_grid(
+  lasso_workflow,
+  resamples = train_folds, 
+  grid = penalty_grid
+)
+autoplot(tune_res_lasso)
+
+best_penalty<-select_best(tune_res_lasso,metrix="roc_auc")
+best_penalty
+
+lasso_final<-finalize_workflow(lasso_workflow,best_penalty)
+
+lasso_final_fit <- fit(lasso_final, data = phone_train)
+
+
+#boosted tree spec
+boost_spec <- boost_tree() %>%
+  set_engine("xgboost") %>%
+  set_mode("classification")
+
+boost_wf <- workflow() %>% 
+  add_model(boost_spec %>% set_args(trees = tune())) %>% 
+  add_recipe(phone_recipe)
+
+tune_grid_boost <- grid_regular(trees(range=c(5,30)), levels = 5)
+
+tune_res_boost <- tune_grid(
+  boost_wf, 
+  resamples = train_folds, 
+  grid = tune_grid_boost, 
+  metrics = metric_set(roc_auc)
+)
+
+autoplot(tune_res_boost)
+
+boost_preformance <- collect_metrics(tune_res_boost)
+
+arrange(boost_preformance, desc(mean))
+
+final_boost <- select_best(tune_res_boost, metric = "roc_auc")
+
+final_wf_boost <- finalize_workflow(boost_wf, final_boost)
+
+final_fit_boost <- fit(final_wf_boost, data = phone_train)
+
+#rand spec
+library(ranger)
+rand_for <- rand_forest() %>%
+  set_engine("ranger", importance = "impurity") 
+rand_for_spec <- rand_for %>%
+  set_mode("classification")
+rand_for_wf <- workflow() %>%
+  add_model(rand_for_spec %>% set_args(mtry = tune())
+            %>% set_args(trees = tune()) %>% 
+              set_args(min_n = tune())) %>% 
+  add_recipe(phone_recipe)
+param_grid_rand <- grid_regular(mtry(range = c(1, 18)),trees(range = c(1,10)),
+                             min_n(range = c(1, 10)),levels = 5)
+
+tune_res_rand <- tune_grid(
+  rand_for_wf, 
+  resamples = train_folds, 
+  grid = param_grid_rand, 
+  metrics = metric_set(roc_auc)
+)
+autoplot(tune_res_rand)
+
+best_rand<-select_best(tune_res_rand,metrix="roc_auc")
+best_rand
+
+rand_final<-finalize_workflow(rand_for_wf, best_rand)
+
+rand_final_fit <- fit(rand_final, data = phone_train)
+
+
+#KNN spec
+KNN_spec <-nearest_neighbor() %>%
+  set_mode("classification") %>%
+  set_engine("kknn") %>% 
+  set_args(neighbors = tune())
+
+translate(KNN_spec)
+
+KNN_workflow <- workflow() %>%
+  add_recipe(phone_recipe) %>%
+  add_model(KNN_spec)
+
+knn_params <- parameters(KNN_spec)
+
+knn_grid <- grid_regular(knn_params, levels = 5)
+
+tune_res_knn <- tune_grid(
+  KNN_workflow,
+  resamples = train_folds,
+  grid = knn_grid
+  # control = tune::control_resamples(save_pred = TRUE)
+)
+
+autoplot(tune_res_knn)
+
+KNN_roc <- collect_metrics(tune_res_knn) %>% 
+  dplyr::select(.metric, mean, std_err)
+
+KNN_roc
+
+best_knn<-select_best(KNN_roc,metrix="roc_auc")
+best_knn
+
+knn_final<-finalize_workflow(KNN_workflow, best_knn)
+
+knn_final_fit <- fit(knn_final, data = phone_train)
+
+
+
+```
+
+# Model Results
+
+Since I am using the four models, I choose my tune grid for as shown in the code specs chunk. I will load my results from RDATA files so that I can compare the best models' performance with roc_auc that we can use it to fit the model.
+```{r}
+load("D:/1/code/pstat131/231models/lasso.RData")
+load("D:/1/code/pstat131/231models/boost.RData")
+load("D:/1/code/pstat131/231models/rand_forest.RData")
+load("D:/1/code/pstat131/231models/KNN.RData")
+```
+
+
+
+## Model's Autoplots
+
+### Lasso Penalty Plot
+
+We can see here that with higher proportion of lasso penalty we have the better accuracy with higher degree od penalty that can be used to compare to the other preformance of our models.
+
+```{r,class.source = "fold-show"}
+autoplot(tune_res_lasso)
+```
+
+### Boosted Tree Autoplot:
+I use the ten levels of trees that is decided across the entire 2000 of trees. In the graph, we can see that the tree seems to reach higher accuracy after the 400 tress.
+
+```{r,class.source = "fold-show"}
+autoplot(tune_res_boost)
+```
+
+### Random Forest Autoplots:
+
+We can see from the graph that the model seem to preform well with higher node size and number of trees. 
+
+```{r,class.source = "fold-show"}
+autoplot(tune_res_rand)
+```
+
+### K Nearest Neighbor Autoplots: 
+We can see that with nearest neighbor increasing, the curve is also increasing. However, the overall roc_auc did not perform so well compared to the other models.
+
+```{r,class.source = "fold-show"}
+autoplot(tune_res_knn, metric = "roc_auc")
+```
+
+## Model Accuracy
+I have use the roc_auc score for the fitting on the training data, and here I have created the table for the roc score and it seems that we even have a perfect roc_auc score on the boosted trees. I want to test the model on both the random forest and the boosted tree on the ttesting set because I want to see if my data is overfitting.
+
+```{r}
+tune_lasso_roc <- augment(lasso_final_fit, new_data = phone_train) %>%
+  roc_auc(price_range,.pred_0,.pred_1, .pred_2, .pred_3) %>% 
+  select(.estimate)
+
+tune_boost_roc <- augment(final_fit_boost, new_data = phone_train) %>%
+  roc_auc(price_range,.pred_0,.pred_1, .pred_2, .pred_3) %>% 
+  select(.estimate)
+tune_rand_roc <- augment(rand_final_fit, new_data = phone_train) %>%
+  roc_auc(price_range,.pred_0,.pred_1, .pred_2, .pred_3) %>% 
+  select(.estimate)
+
+tune_knn_roc <- augment(knn_final_fit, new_data = phone_train) %>%
+  roc_auc(price_range,.pred_0,.pred_1, .pred_2, .pred_3) %>% 
+  select(.estimate)
+
+model_roc <- c(tune_lasso_roc$.estimate,
+                tune_boost_roc$.estimate,
+                tune_rand_roc$.estimate,
+                tune_knn_roc$.estimate)
+
+phone_mod_names <- c(
+            "Lasso",
+            "Boosted Tree",
+            "Random Forest",
+            "K-Nearest Neighbor")
+model_results <- tibble(Model = phone_mod_names,
+                        roc_auc = model_roc)
+
+model_results <- model_results %>% 
+  arrange(-model_roc)
+
+model_results
+```
+
+### Create a bar plot of the proformance of the models on the data
+
+```{r}
+phone_bar_plot <- ggplot(model_results, 
+       aes(x = Model, y = roc_auc)) + 
+  geom_bar(stat = "identity", width=0.2, fill = "coral2", color = "black") + 
+  labs(title = "Models Performance") + 
+  theme_minimal()
+
+phone_bar_plot
+```
+
+I just want to say that the four models all performed vary well here with our data. I want to fit them all on the testing data and see how it goes for all. Of course, I am using the best model of the selected ones.
+
+## Best Model Results
+
+Here I will fit the final best models on our testing sets to see how the model is working under the testing validation set.
+
+### Fitting the Models to our testing set:
+
+```{r}
+#lasso predict and roc curve
+lasso_pre <- predict(lasso_final_fit,new_data=phone_test,type="class")
+
+test_auc_lasso<-augment(lasso_final_fit,new_data=phone_test) %>%
+  roc_auc(price_range,.pred_0,.pred_1, .pred_2, .pred_3) %>% 
+  select(.estimate)
+
+test_acc_lasso<-augment(lasso_final_fit,new_data=phone_test) %>%
+  accuracy(truth=price_range,estimate=.pred_class)
+
+lasso_roc_curve <- augment(lasso_final_fit,new_data=phone_test) %>%
+  roc_curve(price_range,.pred_0,.pred_1, .pred_2, .pred_3)  # computing the ROC curve for this model
+
+lasso_graph <- autoplot(lasso_roc_curve)
+
+#boosted tree predict and roc curve and accuracy
+boost_pre <- predict(final_fit_boost,new_data=phone_test,type="class")
+
+test_auc_boost<-augment(final_fit_boost,new_data=phone_test) %>%
+  roc_auc(price_range,.pred_0,.pred_1, .pred_2, .pred_3) %>% 
+  select(.estimate)
+
+test_acc_boost<-augment(final_fit_boost,new_data=phone_test) %>%
+  accuracy(truth=price_range,estimate=.pred_class)
+
+boost_roc_curve <- augment(final_fit_boost,new_data=phone_test) %>%
+  roc_curve(price_range,.pred_0,.pred_1, .pred_2, .pred_3)  # computing the ROC curve for this model
+
+boost_graph <- autoplot(boost_roc_curve)
+
+#random forest predict and roc curve
+rand_pre <- predict(rand_final_fit,new_data=phone_test,type="class")
+
+test_auc_rand<-augment(rand_final_fit,new_data=phone_test) %>%
+  roc_auc(price_range,.pred_0,.pred_1, .pred_2, .pred_3) %>% 
+  select(.estimate)
+
+test_acc_rand<-augment(rand_final_fit,new_data=phone_test) %>%
+  accuracy(truth=price_range,estimate=.pred_class)
+
+rand_roc_curve <- augment(rand_final_fit,new_data=phone_test) %>%
+  roc_curve(price_range,.pred_0,.pred_1, .pred_2, .pred_3)  # computing the ROC curve for this model
+
+rand_graph <- autoplot(rand_roc_curve)
+
+#knn predict and roc curve
+knn_pre <- predict(knn_final_fit,new_data=phone_test,type="class")
+
+knn_auc_rand<-augment(knn_final_fit,new_data=phone_test) %>%
+  roc_auc(price_range,.pred_0,.pred_1, .pred_2, .pred_3) %>% 
+  select(.estimate)
+
+knn_acc_rand<-augment(knn_final_fit,new_data=phone_test) %>%
+  accuracy(truth=price_range,estimate=.pred_class)
+
+knn_roc_curve <- augment(knn_final_fit,new_data=phone_test) %>%
+  roc_curve(price_range,.pred_0,.pred_1, .pred_2, .pred_3)  # computing the ROC curve for this model
+
+knn_graph <- autoplot(knn_roc_curve)
+
+
+```
+
+### Plot the graphs of four models roc curve:
+
+```{r, fig.width=8}
+ggarrange(lasso_graph, boost_graph, rand_graph,knn_graph,
+                    labels = c("Lasso", "Boost","Rand Forest","KNN"),
+                    ncol = 2, nrow = 2)
+
+```
+
+From the roc curve we can see that the KNN performs poorly and lasso seems to be the best choice. And also for the predictions, the prediction about the 2 price range is not so good in every model comparing it to the other type of predictions.
+
+### Plot the graph of their ROC_AUC on the testing set
+
+```{r}
+result_roc <- c(test_auc_lasso$.estimate,
+                test_auc_boost$.estimate,
+                test_auc_rand$.estimate,
+                knn_auc_rand$.estimate)
+
+phone_mod_names <- c(
+            "Lasso",
+            "Boosted Tree",
+            "Random Forest",
+            "K-Nearest Neighbor")
+model_results_test <- tibble(Model = phone_mod_names,
+                        roc_auc = result_roc)
+
+model_results_test <- model_results_test %>% 
+  arrange(-result_roc)
+
+model_results_test
+```
+
+Here we can clearly see that we have lasso as the best to the testing set. Becuase out models did fairly for all the predictions, I will choose lasso as the final model for its roc_auc score not varying too much. I am afraid the the boosted tree will be the overfitting model for that but in this level their roc_auc score did not vary much so that our choice of model is not so relevant to what we choose.
+
+### Plot the accuracy for the models on the testing sets
+
+```{r}
+result_acc <- c(test_acc_lasso$.estimate,
+                test_acc_boost$.estimate,
+                test_acc_rand$.estimate,
+                knn_acc_rand$.estimate)
+
+modacc_results_test <- tibble(Model = phone_mod_names,
+                        Accuracy = result_acc)
+
+modacc_results_test <- modacc_results_test %>% 
+  arrange(-result_acc)
+
+modacc_results_test
+```
+
+After checking the accuracy, I am pretty sure about using the lasso regression as our final model since my data is not that complicated and I should use the model which is simpler than the tree based models.
+
+
+## Model Prediction
+
+### We have choose the lasso as our final object and we shoold see how this model preform on newly collected data besides the training and testing data
+```{r,class.source = "fold-show"}
+lasso_final_fit
+```
+
+### Let us use this model for a little prediction
+
+Here I put 10 randomly selected new observations in a csv file that contains the outcomes, we can use it for the model accuracy predicting.
+I have use the imput file here for our new predictions.
+
+```{r,class.source = "fold-show"}
+phone_new <- read.csv("D:/1/code/pstat131/new.csv")
+phone_new <- phone_new %>% 
+  mutate(px_size = px_width * px_height)
+
+phone_new$blue <- as.factor(phone_new$blue)
+phone_new$dual_sim <- as.factor(phone_new$dual_sim)
+phone_new$four_g <- as.factor(phone_new$four_g)
+phone_new$three_g <- as.factor(phone_new$three_g)
+phone_new$touch_screen <- as.factor(phone_new$touch_screen)
+phone_new$wifi <- as.factor(phone_new$wifi)
+phone_new$price_range <- as.factor(phone_new$price_range)
+
+```
+
+Now, we can use the lasso_final_fit to predict our collected new data, lets see the results.
+
+```{r,class.source = "fold-show"}
+pred_new <- predict(lasso_final_fit, phone_new, type = "class")
+
+results <- tibble(Prediction = pred_new$.pred_class,
+                        Actual = phone_new$price_range)
+
+results
+```
+
+Here we observed that our model did a good job at predicting this newly collected phone data. We can see that there is a prediction about the price range at a 2 level but it is actually at level 1 which correspond to our findings in the testing set that our model did not predict the price range at level 2 vary well, so I am fine with the results here that I predicted.
+
+# Concludsion
+
+In our research about the phone prices, we have used the method of data analysis, researching of the dataset, finding the best model that fit our data, we have achieved some understanding of the phone price range classification problem. I think that my model did a fairly job in predicting the ranges of the phone prices. However, there is still a lot of things that needed to be improved here. I can use the more advanced method such as the SVM to build more powerful models. I did not do it because my computer can not behave well in fitting a lot of folds and observations. There is also the problem of over-fitting that needs to be examined in our boosted trees model because I find that with fewer observations that more trees will create the problem of over fitting the data. 
+
+The reason for me to find this project is to give insights to online sellers that they can premodel the phone prices based on the parameter that is collected. This model's predicting power is also limited because this data is from 5 years ago's data. I think if I can collect a newer data set and also include the core processor performance power and screen quality for the mobile phones nowadays, I can use this method to analyze the newer data more efficiently.
+
+In a word, I think my model did a fair job and provide me with some beginner's experience in the machine learning area. I think later on I will definitely study more in this area and improve my model's performance.
+
